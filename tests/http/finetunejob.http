@@ -1,0 +1,50 @@
+### 创建job
+POST {{host}}/v1/finetune_jobs
+accept: application/json
+Content-Type: application/json
+
+{
+        "finetune_args_id": "123e4567-e89b-12d3-a456-426614174000",
+        "config_path": "/configs/my_config.yaml",
+        "job_status": "pending",
+        "job_priority": 5,
+        "queue_name": "default",
+        "worker_node": "worker-1",
+        "dispatched_at": null,
+        "started_at": null,
+        "finished_at": null,
+        "last_heartbeat": null,
+        "error_message": null,
+        "logs_url": null,
+        "created_at": null,
+        "updated_at": "2025-07-17"
+}
+
+> {%
+    // 提取响应中的Lora的ID并存储在全局变量中
+    client.global.set("projectId", response.body.data.id);
+%}
+
+### 获取job(list版)
+GET {{host}}/v1/finetune_jobs
+
+### 获取job
+GET {{host}}/v1/finetune_jobs/{{projectId}}
+
+### 删除job
+DELETE {{host}}/v1/finetune_jobs/{{projectId}}
+
+### 更新
+PUT {{host}}/v1/finetune_jobs/{{projectId}}
+accept: application/json
+Content-Type: application/json
+
+{
+
+        "finished_at": null,
+        "last_heartbeat": "2025-07-19"
+}
+
+### 更新任务状态和时间戳
+POST {{host}}/v1/finetune_jobs/{{projectId}}/status?new_status=completed&timestamp_field=finished_at
+accept: application/json

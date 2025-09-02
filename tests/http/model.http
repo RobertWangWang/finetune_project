@@ -1,0 +1,49 @@
+### 获取模型列表
+GET {{host}}/v1/llms?page=1&page_size=10
+
+### 创建模型
+POST {{host}}/v1/llms
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "测试模型名称",
+  "model_name": "ep-20250725094612-wx5hp",
+  "model_type": "text-generation",
+  "capability": ["Reasoning"],
+  "api_key": "c8bf6018-561c-4dac-a164-900d0c10396b",
+  "endpoint_id": "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+  "is_valid": true,
+  "is_default": false
+}
+
+> {%
+    // 提取响应中的项目ID并存储在全局变量中
+    client.global.set("model_id", response.body.data.id);
+%}
+
+### 更新模型
+PUT {{host}}/v1/llms/{{model_id}}
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "测试模型名称1",
+  "model_name": "ep-20250725094612-wx5hp1",
+  "model_type": "text-generation",
+  "capability": ["Reasoning"],
+  "api_key": "c8bf6018-561c-4dac-a164-900d0c10396b1",
+  "endpoint_id": "https://ark.cn-beijing.volces.com/api/v3/chat/completions1",
+  "is_valid": true,
+  "is_default": false
+}
+
+### 删除模型
+DELETE {{host}}/v1/llms/{{model_id}}
+accept: application/json
+Content-Type: application/json
+
+### 设置默认模型
+POST {{host}}/v1/llms/{{model_id}}/set_default
+accept: application/json
+Content-Type: application/json

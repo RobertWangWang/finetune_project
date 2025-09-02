@@ -1,0 +1,209 @@
+### 创建 ModelArguments config
+POST {{host}}/v1/finetune_configs
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "SFT ModelArguments 参数创建",
+  "description": "创建 ModelArguments 用于表明使用哪个模型",
+  "module": "Model",
+  "config_type": "ModelArguments",
+  "config": {
+    "model_name_or_path": "/dataset_finetune/models/DeepSeek-R1-Distill-Qwen-1.5B",
+    "trust_remote_code": true
+  }
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("model_arg_config_id", response.body.data.id);
+%}
+
+### 创建 FinetuningArguments config
+POST {{host}}/v1/finetune_configs
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "SFT FinetuningArguments 参数创建",
+  "description": "创建 FinetuningArguments 用于表明使用哪个微调阶段",
+  "module": "Finetuning",
+  "config_type": "FinetuningArguments",
+  "config": {
+    "stage": "sft",
+    "finetuning_type": "lora",
+    "lora_rank": 8,
+    "lora_target": "all"
+  }
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("finetuning_arg_config_id", response.body.data.id);
+%}
+
+
+### 创建 TrainingArguments config
+POST {{host}}/v1/finetune_configs
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "SFT TrainingArguments 参数创建",
+  "description": "创建 TrainingArguments 用于表明使用哪个微调阶段",
+  "module": "Training",
+  "config_type": "TrainingArguments",
+  "config": {
+    "do_train": true,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "learning_rate": 1.0e-4,
+    "num_train_epochs": 3.0,
+    "lr_scheduler_type": "cosine",
+    "warmup_ratio": 0.1,
+    "bf16": true,
+    "ddp_timeout": 180000000,
+    "resume_from_checkpoint": null
+  }
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("training_arg_config_id", response.body.data.id);
+%}
+
+
+### 创建 DataArguments config
+POST {{host}}/v1/finetune_configs
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "SFT DataArguments 参数创建",
+  "description": "创建 DataArguments 用于表明使用哪个微调阶段",
+  "module": "Data",
+  "config_type": "DataArguments",
+  "config": {
+    "dataset": "",
+    "template": "llama3",
+    "cutoff_len": 2048,
+    "max_samples": 1000,
+    "overwrite_cache": true,
+    "preprocessing_num_workers": 16
+  }
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("data_arg_config_id", response.body.data.id);
+%}
+
+### 创建 OutputArguments config
+POST {{host}}/v1/finetune_configs
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "SFT OutputArguments 参数创建",
+  "description": "创建 OutputArguments 用于表明使用哪个微调阶段",
+  "module": "Output",
+  "config_type": "OutputArguments",
+  "config": {
+    "output_dir": "",
+    "logging_steps": 10,
+    "save_steps": 500,
+    "plot_loss": true,
+    "overwrite_output_dir": true,
+    "save_only_model": false,
+    "report_to": "none"
+  }
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("output_arg_config_id", response.body.data.id);
+%}
+
+
+### 创建微调机器
+POST {{host}}/v1/machines
+accept: application/json
+Content-Type: application/json
+
+{
+  "hostname": "SFT微调机器",
+  "device_type": "A110",
+  "cuda_available": true,
+  "gpu_count": 1,
+  "internal_ip": "118.145.195.27",
+  "ip": "118.145.195.27",
+  "ssh_port": "22",
+  "ssh_user": "root",
+  "ssh_password": "itqm123!@#"
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("machine_id", response.body.data.id);
+%}
+
+### 创建数据集
+POST {{host}}/v1/dataset_versions
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "创建SFT数据集版本",
+  "description": "创建SFT数据集版本",
+  "dataset_type": "SFT",
+  "project_id": "600bc29d-7b4c-4233-a58b-fbbb59f7f0f3",
+  "dataset_id_list": ["c2edc756-1797-45d6-b6d8-52bc8e9ca566", "cb9a7daa-feb5-4bba-9941-8454016fccf2"]
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("dataset_version_id", response.body.data.id);
+%}
+
+### 样例展示
+POST {{host}}/v1/finetune_jobs/running_example
+accept: application/json
+Content-Type: application/json
+
+{
+    "stage": "SFT",
+    "dataset_version_id": "{{dataset_version_id}}",
+    "finetune_config_id_list": ["{{model_arg_config_id}}", "{{finetuning_arg_config_id}}", "{{training_arg_config_id}}", "{{training_arg_config_id}}", "{{data_arg_config_id}}", "{{output_arg_config_id}}"],
+    "node_finetune_machine_id_list": ["{{machine_id}}"]
+}
+
+### 创建任务
+POST {{host}}/v1/finetune_jobs
+accept: application/json
+Content-Type: application/json
+
+{
+    "name": "创建SFT微调任务",
+    "description": "创建SFT微调任务描述",
+    "stage": "SFT",
+    "dataset_version_id": "{{dataset_version_id}}",
+    "finetune_config_id_list": ["{{model_arg_config_id}}", "{{finetuning_arg_config_id}}", "{{training_arg_config_id}}", "{{training_arg_config_id}}", "{{data_arg_config_id}}", "{{output_arg_config_id}}"],
+    "node_finetune_machine_id_list": ["{{machine_id}}"]
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("finetune_job_id", response.body.data.id);
+%}
+
+### 启动任务
+POST {{host}}/v1/finetune_jobs/{{finetune_job_id}}/start
+
+### 查看日志
+GET {{host}}/v1/finetune_jobs/{{finetune_job_id}}/logs?machine_id=3105a55c-f57b-4549-b445-b02a85a01e7e
+Accept: text/event-stream
+Connection: keep-alive
+Cache-Control: no-cache
+
+### 查询任务
+GET {{host}}/v1/finetune_jobs?page=1&page_size=10

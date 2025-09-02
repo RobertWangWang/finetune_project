@@ -1,0 +1,39 @@
+### 创建项目
+POST {{host}}/v1/projects
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "第一个项目"
+}
+
+> {%
+    // 提取响应中的项目ID并存储在全局变量中
+    client.global.set("projectId", response.body.data.id);
+%}
+
+### 获取项目
+GET {{host}}/v1/projects/{{projectId}}
+
+
+### 更新项目
+PUT {{host}}/v1/projects/{{projectId}}
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "第一个项目更新"
+}
+
+### 获取项目
+GET {{host}}/v1/projects/{{projectId}}
+
+### 删除项目
+DELETE {{host}}/v1/projects/a2a8ae99-0e78-45d1-bf49-d91c89fb6b1b
+accept: application/json
+Content-Type: application/json
+Accept-Language: zh
+
+
+### 获取项目列表
+GET {{host}}/v1/projects?pageNo=1&pageSize=10

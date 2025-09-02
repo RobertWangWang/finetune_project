@@ -1,0 +1,307 @@
+# Chinese translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-06-26 15:04+0800\n"
+"PO-Revision-Date: 2025-06-26 15:04+0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh\n"
+"Language-Team: zh <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+msgid "Project_id param is required"
+msgstr "project_id 参数是必填项"
+
+msgid "Project not found. id: {id}"
+msgstr "project 不存在。id: {id}"
+
+msgid "File_id param is required"
+msgstr "file_id 参数是必填项"
+
+msgid "File pair not found. id: {id}"
+msgstr "文件分片未找到. id: {id}"
+
+msgid "File not found. id: {id}"
+msgstr "文件未找到. id: {id}"
+
+msgid "Unsupported file type. Allowed types: {types}"
+msgstr "不支持的文件类型。允许的类型: {types}"
+
+msgid "Question not found. id: {id}"
+msgstr "问题未找到. id: {id}"
+
+msgid "Tag not found. id: {id}"
+msgstr "标签未找到. id: {id}"
+
+msgid "Parent tag not found. parent_id: {id}"
+msgstr "父标签未找到. parent_id: {id}"
+
+msgid "Dataset not found. id: {id}"
+msgstr "数据集未找到. id: {id}"
+
+msgid "Error: requests are too frequent"
+msgstr "错误，请求过于频繁"
+
+msgid "error: Connection issue  info: {str}"
+msgstr "错误: 连接出问题，错误信息: {str}"
+
+msgid "Api call failed, status_code: {status_code}, message: {message}"
+msgstr "api 调用失败, 状态码: {status_code}, 信息: {message}"
+
+msgid "Unexpected error. error: {error}"
+msgstr "意外错误. 信息: {error}"
+
+msgid "Error: model config not found"
+msgstr "错误: 模型配置未找到"
+
+msgid "No handler found for job type: {type}"
+msgstr "没有找到对应任务的执行器, type: {type}"
+
+msgid "Error executing job, error: {error}"
+msgstr "执行任务失败, error: {error}"
+
+msgid "Start processing files, file_name: {file_name}"
+msgstr "开始处理文件, 文件名称: {file_name}"
+
+msgid "End processing files, file_name: {file_name}"
+msgstr "结束处理文件, 文件名称: {file_name}"
+
+msgid "Start splitting files"
+msgstr "开始分割文件"
+
+msgid "End splitting files"
+msgstr "结束分割文件"
+
+msgid "Process files failed, file_id: {file_id}, error: {error}"
+msgstr "处理文件失败, 文件id: {file_id}, 错误: {error}"
+
+msgid "Process files config, file_id_list: {file_id_list}, config: {config}"
+msgstr "处理文件的配置, 文件 id 列表: {file_id_list}, 配置: {config}"
+
+msgid "GA Pair not found. id: {id}"
+msgstr "文本受众对未找到. id: {id}"
+
+msgid "Job cancel"
+msgstr "任务取消"
+
+msgid "Parameter verification failed. {param}"
+msgstr "参数校验失败. {param}"
+
+msgid "Error parsing JSON returned by llm. error: {error}, output: {output}"
+msgstr "解析大模型返回的 JSON 时出错. 错误: {error}, 返回值: {output}"
+
+msgid "The model is not output in standard format. output: {output}"
+msgstr "模型未按标准格式输出. 返回值: {output}"
+
+msgid "Start calling the llm to generate data. prompt: {prompt}"
+msgstr "开始调用大模型生成数据. 提示词: {prompt}"
+
+msgid "End calling the llm to generate data. output: {output}"
+msgstr "结束调用大模型生成数据. 输出结果: {output}"
+
+msgid "Ga Pair generate config. config: {config}"
+msgstr "文本受众对生成配置. config: {config}"
+
+msgid "Job not found. id: {id}"
+msgstr "任务未找到. id: {id}"
+
+msgid "Running tasks cannot be deleted, please stop first"
+msgstr "运行中的任务无法删除，请先停止"
+
+msgid "Only running tasks can be stopped"
+msgstr "只有运行中的任务才能停止"
+
+msgid "Start create file catalog"
+msgstr "开始创建文件目录"
+
+msgid "End create file catalog"
+msgstr "结束创建文件目录"
+
+msgid "Start generator tag"
+msgstr "开始构建标签"
+
+msgid "End generator tag"
+msgstr "结束构建标签"
+
+msgid "Upload file failed, identical file exists: {file_name}"
+msgstr "上传文件失败，存在相同文件: {file_name}"
+
+msgid "Process file delete config, file_name: {file_name}, config: {config}"
+msgstr "处理文件删除的配置, 文件名称: {file_name}, 配置: {config}"
+
+msgid "Param {param} is required"
+msgstr "参数 {param} 是必填项"
+
+msgid "Process failed, file_pair_id: {file_id}, error: {error}"
+msgstr "处理文件分片失败, 分片id: {file_id}, 错误: {error}"
+
+msgid "Process file_pair config: {config}"
+msgstr "处理文件分片配置: {config}"
+
+msgid "Start process file_pair id: {id}"
+msgstr "开始处理文件分片 id: {id}"
+
+msgid "End process file_pair id: {id}"
+msgstr "结束处理文件分片 id: {id}"
+
+msgid "Start LLM generator question by GA. ga_info: {ga_info}, prompt: {prompt}"
+msgstr "开始使用LLM根据GA生成问题. GA信息: {ga_info}, 提示词: {prompt}"
+
+msgid "Start LLM generator question. prompt: {prompt}"
+msgstr "开始使用LLM生成问题. 提示词: {prompt}"
+
+msgid "End LLM generator question by GA. result={result}"
+msgstr "结束使用LLM根据GA生成问题. 返回结果={result}"
+
+msgid "End LLM generator question. result={result}"
+msgstr "结束使用LLM生成问题. 返回结果={result}"
+
+msgid "LLM generation result failed, result is empty"
+msgstr "大模型生成结果失败，内容为空"
+
+msgid "Start LLM rebuild question by label. prompt: {prompt}"
+msgstr "开始使用LLM根据标签重新构建问题. 提示词: {prompt}"
+
+msgid "Process file_pair failed, file_pair_id: {file_pair_id}, error: {error}"
+msgstr "处理文件分片失败, 分片id: {file_pair_id}, 错误: {error}"
+
+msgid "Process dataset generator config: {config}"
+msgstr "处理数据集生成配置: {config}"
+
+msgid "Process question failed, question_id: {question_id}, error: {error}"
+msgstr "处理问题失败, 问题id: {question_id}, 错误: {error}"
+
+msgid "Start process question. question_id: {id}"
+msgstr "开始处理问题. 问题id: {id}"
+
+msgid "Use MGA to enhance prompt words to generate answers"
+msgstr "使用MGA增强提示词生成答案"
+
+msgid "Generate answers using standard prompt words"
+msgstr "使用标准提示词生成答案"
+
+msgid "Start LLM generator dataset, prompt: {prompt}"
+msgstr "开始使用大模型生成数据集, 提示词: {prompt}"
+
+msgid "End LLM generator dataset. result={result}"
+msgstr "结束使用大模型生成数据集. 结果={result}"
+
+msgid "End process question. question_id: {id}"
+msgstr "结束处理问题. 问题id: {id}"
+
+msgid "Machine not found. id: {id}"
+msgstr "机器未找到. id: {id}"
+
+msgid "I/O error occurred while writing file. error: {error}"
+msgstr "写入文件时发生 I/O 错误. 错误: {error}"
+
+msgid "Unexpected error occurred. error: {error}"
+msgstr "发生未预期的错误. 错误: {error}"
+
+msgid "Dataset version not found. id: {id}"
+msgstr "数据集版本未找到. id: {id}"
+
+msgid "File not found. error: {error}"
+msgstr "文件未找到. 错误: {error}"
+
+msgid "No permission to read. error: {error}"
+msgstr "无权限读取. 错误: {error}"
+
+msgid "FinetuneConfig not found. id: {id}"
+msgstr "FinetuneConfig 不存在. id: {id}"
+
+msgid "Machine connection test failed. error: {error}"
+msgstr "机器连接测试失败. 错误: {error}"
+
+msgid "Llamafactory-cli on the machine was not found. exit_code: {exit_code}, error: {error}"
+msgstr "机器上的 llamafactory-cli 未找到. 退出码: {exit_code}, 错误: {error}"
+
+msgid "Connection successful"
+msgstr "连接成功"
+
+msgid "Only support Starting, Cancel, Success, Failed status finetune job query log"
+msgstr "只支持运行中, 取消, 成功, 失败等状态的微调任务查询日志"
+
+msgid "Finetune job not found. id: {id}"
+msgstr "微调任务未找到. id: {id}"
+
+msgid "Only support start Init status finetune job"
+msgstr "只支持启动 初始化 状态的微调任务"
+
+msgid "Only support cancel Starting status finetune job"
+msgstr "只支持取消 运行中 状态的微调任务"
+
+msgid "Machine connection has failed more than 10 times in a row, fine-tuning terminated"
+msgstr "机器连接连续超过10次失败, 微调终止"
+
+msgid "In cases of single machine with multiple cards or multiple machines, the DeepSpeed configuration must be chosen"
+msgstr "单机多卡或者多机器的情况必须选择 DeepSpeed 配置"
+
+msgid "The file does not exist: {filepath}"
+msgstr "文件不存在: {filepath}"
+
+msgid "The path is not a file: {filepath}"
+msgstr "路径不是文件: {filepath}"
+
+msgid "File read timeout"
+msgstr "文件读取超时"
+
+msgid "SSH authentication failed: incorrect username/password/private key"
+msgstr "SSH认证失败：账号/密码/私钥错误"
+
+msgid "SSH connection exception. {error}"
+msgstr "SSH连接异常. {error}"
+
+msgid "An unknown error occurred during the connection process. {error}"
+msgstr "连接过程中发生未知错误. {error}"
+
+msgid "File read error. {error}"
+msgstr "文件读取错误. {error}"
+
+msgid "Failed to download the file. {error}"
+msgstr "下载文件失败. {error}"
+
+msgid "Finetune release not found. {id}"
+msgstr "微调制品未找到. {id}"
+
+msgid "Deploy cluster not found. id: {id}"
+msgstr "部署集群未找到. id: {id}"
+
+msgid "Can not delete Deploying or Starting status deploy cluster"
+msgstr "不能删除部署中和运行中的部署集群"
+
+msgid "Can not delete Deploying or Starting status lora adaptor"
+msgstr "不能删除部署中和运行中的 lora 模型"
+
+msgid "Can not install Deploying or Starting status deploy cluster"
+msgstr "部署中或者运行中的部署集群无法安装"
+
+msgid "Only support Starting status deploy cluster"
+msgstr "只支持运行中的部署集群"
+
+msgid "The connected machine was not found. ids: {ids}"
+msgstr "连接的机器未找到. ids: {ids}"
+
+msgid "Deploy LLM by vllm and ray failed. error: {error}"
+msgstr "使用 vllm 和 ray 部署大模型失败. 错误: {error}"
+
+msgid "Start deploy job failed. exit_code: {exit_code}, error: {error}"
+msgstr "启动部署任务失败. exit_code: {exit_code}, error: {error}"
+
+msgid "Stop deploy cluster service failed. error: {error}"
+msgstr "停止部署的集群服务失败. error: {error}"
+
+msgid "Remove deploy cluster service failed. error: {error}"
+msgstr "删除部署的集群服务失败. error: {error}"
+
+msgid "Request {path} to remote machine failed. ip: {ip}, port: {port}, status_code: {status_code}, error_info: {error_info}"
+msgstr "请求远程机器的 {path} 接口失败. ip: {ip}, 端口: {port}, 退出码: {status_code}, 错误信息: {error_info}"

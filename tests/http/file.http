@@ -1,0 +1,89 @@
+### 上传文件
+POST {{host}}/v1/files/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="project_id"
+
+600bc29d-7b4c-4233-a58b-fbbb59f7f0f3
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="index.md"
+Content-Type: text/plain
+
+< ../data/index.md
+--WebAppBoundary--
+
+> {%
+    // 提取响应中的项目ID并存储在全局变量中
+    client.global.set("file_id", response.body.data[0].id);
+%}
+
+
+### 查询文件详情
+GET {{host}}/v1/files/{{file_id}}
+
+### 下载文件
+GET {{host}}/v1/files/{{file_id}}/download
+
+### 文件分片
+POST {{host}}/v1/files/{{file_id}}/split
+accept: application/json
+Content-Type: application/json
+
+{
+  "toc_build_action": "Revise"
+}
+
+### 查询文件分片
+GET {{host}}/v1/file_pairs?pageNo=1&pageSize=10&project_id=600bc29d-7b4c-4233-a58b-fbbb59f7f0f3&file_ids={{file_id}}
+
+### 查询文件列表
+GET {{host}}/v1/files?pageNo=1&pageSize=10&project_id=600bc29d-7b4c-4233-a58b-fbbb59f7f0f3
+
+### 删除文件
+DELETE {{host}}/v1/files/{{file_id}}
+accept: application/json
+Content-Type: application/json
+
+### 查询文件列表
+GET {{host}}/v1/files?pageNo=1&pageSize=10&project_id=600bc29d-7b4c-4233-a58b-fbbb59f7f0f3
+
+
+
+### 上传另一个文件
+POST {{host}}/v1/files/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="project_id"
+
+600bc29d-7b4c-4233-a58b-fbbb59f7f0f3
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="faq.md"
+Content-Type: text/plain
+
+< ../data/faq.md
+--WebAppBoundary--
+
+> {%
+    // 提取响应中的项目ID并存储在全局变量中
+    client.global.set("file_id", response.body.data[0].id);
+%}
+
+### 文件分片
+POST {{host}}/v1/files/{{file_id}}/split
+accept: application/json
+Content-Type: application/json
+
+{
+  "toc_build_action": "Revise"
+}
+
+### 删除文件
+DELETE {{host}}/v1/files/{{file_id}}
+accept: application/json
+Content-Type: application/json
+
+{
+  "toc_build_action": "Revise"
+}

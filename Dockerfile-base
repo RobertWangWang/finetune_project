@@ -1,0 +1,18 @@
+# 基础环境，用于加速构建
+FROM ccr.ccs.tencentyun.com/itqm-base-images/python:3.11-slim-bookworm-gcc
+
+# 更新 pip 到最新版本
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/  \
+    && pip config set install.trusted-host mirrors.aliyun.com \
+    && pip install --upgrade pip
+
+# 安装必要的系统依赖
+RUN apt-get update && \
+    apt-get install -y libgl1-mesa-glx && \
+    rm -rf /var/lib/apt/lists/*
+
+# 复制 requirements.txt 到工作目录
+COPY requirements.txt .
+
+# 安装依赖
+RUN pip install --no-cache-dir -r requirements.txt

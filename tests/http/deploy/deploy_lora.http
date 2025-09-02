@@ -1,0 +1,69 @@
+### 创建部署集群
+POST {{host}}/v1/deploy_clusters
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "测试创建部署集群",
+  "machine_id_list": ["fa4ce542-3b1a-4daf-a59e-4e50fc1c29f0"],
+  "base_model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+  "finetune_method": "lora"
+}
+
+> {%
+    // 提取响应中的Lora的ID并存储在全局变量中
+    client.global.set("cluster_id", response.body.data.id);
+%}
+
+### 查询集群信息
+GET {{host}}/v1/deploy_clusters?page=1&page_size=10
+
+### 安装集群到服务器
+POST {{host}}/v1/deploy_clusters/{{cluster_id}}/install
+accept: application/json
+Content-Type: application/json
+
+### 创建 lora adaptor
+POST {{host}}/v1/deploy_clusters/{{cluster_id}}/lora_adaptor/create
+accept: application/json
+Content-Type: application/json
+
+{
+  "release_id": "b875439f-f942-4e4c-aacc-46c12caf8511",
+  "finetune_model_path": "/Users/kakj/python/dataset-finetune-api/tests/data/finetune/0726b083-2fc9-4d1b-bf27-8a4f003b7792/lora_model.tar.gz",
+  "stage": "SFT"
+}
+
+> {%
+    // 提取响应中的Lora的ID并存储在全局变量中
+    client.global.set("lora_adaptor_id", response.body.data);
+%}
+
+### 部署 lora adaptor
+POST {{host}}/v1/deploy_clusters/{{cluster_id}}/lora_adaptor/{{lora_adaptor_id}}/install
+accept: application/json
+Content-Type: application/json
+
+
+### 卸载 lora adaptor
+POST {{host}}/v1/deploy_clusters/{{cluster_id}}/lora_adaptor/{{lora_adaptor_id}}/uninstall
+accept: application/json
+Content-Type: application/json
+
+
+
+### 查看 cluster 日志
+GET {{host}}/v1/deploy_clusters/{{cluster_id}}/logs
+Accept: text/event-stream
+Connection: keep-alive
+Cache-Control: no-cache
+
+
+
+### 卸载集群到服务器
+POST {{host}}/v1/deploy_clusters/{{cluster_id}}/uninstall
+accept: application/json
+Content-Type: application/json
+
+
+

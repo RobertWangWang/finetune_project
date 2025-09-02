@@ -1,0 +1,58 @@
+### 创建微调参数
+POST {{host}}/v1/finetune_configs
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "测试微调参数",
+  "description": "测试微调参数描述",
+  "module": "Training",
+  "config_type": "Seq2SeqTrainingArguments",
+  "config": {
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 2,
+    "learning_rate": 1.0e-5,
+    "num_train_epochs": 3.0,
+    "lr_scheduler_type": "cosine",
+    "warmup_ratio": 0.1,
+    "bf16": true,
+    "ddp_timeout": 180000000,
+    "resume_from_checkpoint": null
+  }
+}
+
+> {%
+    // 提取响应中的Lora的ID并存储在全局变量中
+    client.global.set("finetune_config_id", response.body.data.id);
+%}
+
+### 修改微调参数
+PUT {{host}}/v1/finetune_configs/{{finetune_config_id}}
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "测试微调参数1",
+  "description": "测试微调参数描述1",
+  "module": "Training",
+  "config_type": "Seq2SeqTrainingArguments",
+  "config": {
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 2,
+    "learning_rate": 1.0e-5,
+    "num_train_epochs": 3.0,
+    "lr_scheduler_type": "cosine",
+    "warmup_ratio": 0.1,
+    "bf16": true,
+    "ddp_timeout": 180000000,
+    "resume_from_checkpoint": null
+  }
+}
+
+### 查询微调参数
+GET {{host}}/v1/finetune_configs?page=1&page_size=10&module=Training&config_type=Seq2SeqTrainingArguments
+
+### 删除微调参数
+DELETE {{host}}/v1/finetune_configs/{{finetune_config_id}}
+
+# todo 验证各种类型的参数是否正确

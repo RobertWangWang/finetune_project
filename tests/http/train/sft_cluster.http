@@ -1,0 +1,126 @@
+### 创建 deepspeed 配置
+POST {{host}}/v1/finetune_configs
+accept: application/json
+Content-Type: application/json
+
+{
+  "name": "SFT DeepspeedArguments 参数创建",
+  "description": "创建 DeepspeedArguments 用于表明使用哪个模型",
+  "module": "Output",
+  "config_type": "DeepspeedArguments",
+  "config": {
+    "train_batch_size": "auto",
+    "train_micro_batch_size_per_gpu": "auto",
+    "gradient_accumulation_steps": "auto",
+    "gradient_clipping": "auto",
+    "zero_allow_untested_optimizer": true,
+    "fp16": {
+      "enabled": "auto",
+      "loss_scale": 0,
+      "loss_scale_window": 1000,
+      "initial_scale_power": 16,
+      "hysteresis": 2,
+      "min_loss_scale": 1
+    },
+    "bf16": {
+      "enabled": "auto"
+    },
+    "zero_optimization": {
+      "stage": 3,
+      "overlap_comm": false,
+      "contiguous_gradients": true,
+      "sub_group_size": 1e9,
+      "reduce_bucket_size": "auto",
+      "stage3_prefetch_bucket_size": "auto",
+      "stage3_param_persistence_threshold": "auto",
+      "stage3_max_live_parameters": 1e9,
+      "stage3_max_reuse_distance": 1e9,
+      "stage3_gather_16bit_weights_on_model_save": true
+    }
+  }
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("deepspeed_arg_config_id", response.body.data.id);
+%}
+
+
+### 创建微调机器
+POST {{host}}/v1/machines
+accept: application/json
+Content-Type: application/json
+
+{
+  "hostname": "SFT双卡微调机器1",
+  "device_type": "A30",
+  "cuda_available": true,
+  "gpu_count": 2,
+  "ip": "118.145.80.1",
+  "internal_ip": "172.31.32.2",
+  "ssh_port": "22",
+  "ssh_user": "root",
+  "ssh_password": "itqm123!@#"
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("machine_id1", response.body.data.id);
+%}
+
+### 创建微调机器
+POST {{host}}/v1/machines
+accept: application/json
+Content-Type: application/json
+
+{
+  "hostname": "SFT双卡微调机器2",
+  "device_type": "A30",
+  "cuda_available": true,
+  "gpu_count": 2,
+  "ip": "118.145.82.187",
+  "internal_ip": "172.31.32.3",
+  "ssh_port": "22",
+  "ssh_user": "root",
+  "ssh_password": "itqm123!@#"
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("machine_id2", response.body.data.id);
+%}
+
+### 创建任务
+POST {{host}}/v1/finetune_jobs
+accept: application/json
+Content-Type: application/json
+
+{
+    "name": "创建SFT微调任务",
+    "description": "创建SFT微调任务描述",
+    "stage": "SFT",
+    "dataset_version_id": "b720e20d-73aa-48c5-a609-dd96bdc14e29",
+    "finetune_config_id_list": ["708bde5f-28c2-429a-a7a8-d74330ae2d55", "f3a778e4-dbdf-4019-a6b5-3cd52c09dc1d",
+    "80ffed28-897d-4dd0-a988-f00a5028f9d9", "f1dd03ac-dd19-4fbf-b6e2-cee6e0c8d920", "561d2254-4733-45df-a6c7-2473c2c53d22", "da20be7d-f917-49b0-9d0d-47541cef4b63"],
+    "node_finetune_machine_id_list": ["{{machine_id1}}", "{{machine_id2}}"]
+}
+
+> {%
+    // 提取响应中的Machine的ID并存储在全局变量中
+    client.global.set("finetune_job_id", response.body.data.id);
+%}
+
+### 启动任务
+POST {{host}}/v1/finetune_jobs/{{finetune_job_id}}/start
+
+### 查看日志
+GET {{host}}/v1/finetune_jobs/{{finetune_job_id}}/logs?machine_id=8eb15d7a-89e0-413b-825c-ac786a74cfb1
+Accept: text/event-stream
+Connection: keep-alive
+Cache-Control: no-cache
+
+### 查询任务
+GET {{host}}/v1/finetune_jobs?page=1&page_size=10
+
+### 停止任务
+POST {{host}}/v1/finetune_jobs/{{finetune_job_id}}/cancel

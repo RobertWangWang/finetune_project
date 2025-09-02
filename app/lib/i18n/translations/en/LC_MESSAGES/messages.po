@@ -1,0 +1,305 @@
+# English translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-06-26 15:04+0800\n"
+"PO-Revision-Date: 2025-06-26 15:04+0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+msgid "Project_id param is required"
+msgstr "Project_id param is required"
+
+msgid "Project not found. id: {id}"
+msgstr "Project not found. id: {id}"
+
+msgid "File_id param is required"
+msgstr "File_id param is required"
+
+msgid "File pair not found. id: {id}"
+msgstr "File pair not found. id: {id}"
+
+msgid "File not found. id: {id}"
+msgstr "File not found. id: {id}"
+
+msgid "Unsupported file type. Allowed types: {types}"
+msgstr "Unsupported file type. Allowed types: {types}"
+
+msgid "Question not found. id: {id}"
+msgstr "Question not found. id: {id}"
+
+msgid "Tag not found. id: {id}"
+msgstr "Tag not found. id: {id}"
+
+msgid "Parent tag not found. parent_id: {id}"
+msgstr "Parent tag not found. parent_id: {id}"
+
+msgid "Dataset not found. id: {id}"
+msgstr "Dataset not found. id: {id}"
+
+msgid "Error: requests are too frequent"
+msgstr "Error: requests are too frequent"
+
+msgid "Error: Connection issue info: {str}"
+msgstr "Error: Connection issue info: {str}"
+
+msgid "Api call failed, status_code: {status_code}, message: {message}"
+msgstr "Api call failed, status_code: {status_code}, message: {message}"
+
+msgid "Unexpected error. error: {error}"
+msgstr "Unexpected error. error: {error}"
+
+msgid "Error: model config not found"
+msgstr "Error: model config not found"
+
+msgid "No handler found for job type: {type}"
+msgstr "No handler found for job type: {type}"
+
+msgid "Error executing job, error: {error}"
+msgstr "Error executing job, error: {error}"
+
+msgid "Start processing files, file_name: {file_name}"
+msgstr "Start processing files, file_name: {file_name}"
+
+msgid "End processing files, file_name: {file_name}"
+msgstr "End processing files, file_name: {file_name}"
+
+msgid "Start splitting files"
+msgstr "Start splitting files"
+
+msgid "End splitting files"
+msgstr "End splitting files"
+
+
+msgid "Process files failed, file_id: {file_id}, error: {error}"
+msgstr "Process files failed, file_id: {file_id}, error: {error}"
+
+msgid "Process files config, file_id_list: {file_id_list}, config: {config}"
+msgstr "Process files config, file_id_list: {file_id_list}, config: {config}"
+
+msgid "GA Pair not found. id: {id}"
+msgstr "GA Pair not found. id: {id}"
+
+msgid "Job cancel"
+msgstr "Job cancel"
+
+msgid "Parameter verification failed. {param}"
+msgstr "Parameter verification failed. {param}"
+
+msgid "Error parsing JSON returned by llm. error: {error}, output: {output}"
+msgstr "Error parsing JSON returned by llm. error: {error}, output: {output}"
+
+msgid "The model is not output in standard format. output: {output}"
+msgstr "The model is not output in standard format. output: {output}"
+
+msgid "Start calling the llm to generate data. prompt: {prompt}"
+msgstr "Start calling the llm to generate data. prompt: {prompt}"
+
+msgid "End calling the llm to generate data. output: {output}"
+msgstr "End calling the llm to generate data. output: {output}"
+
+msgid "Ga Pair generate config. config: {config}"
+msgstr "Ga Pair generate config. config: {config}"
+
+msgid "Job not found. id: {id}"
+msgstr "Job not found. id: {id}"
+
+msgid "Running tasks cannot be deleted, please stop first"
+msgstr "Running tasks cannot be deleted, please stop first"
+
+msgid "Only running tasks can be stopped"
+msgstr "Only running tasks can be stopped"
+
+msgid "Start create file catalog"
+msgstr "Start create file catalog"
+
+msgid "End create file catalog"
+msgstr "End create file catalog"
+
+msgid "Start generator tag"
+msgstr "Start generator tag"
+
+msgid "End generator tag"
+msgstr "End generator tag"
+
+msgid "Upload file failed, identical file exists: {file_name}"
+msgstr "Upload file failed, identical file exists: {file_name}"
+
+msgid "Process file delete config, file_name: {file_name}, config: {config}"
+msgstr "Process file delete config, file_name: {file_name}, config: {config}"
+
+msgid "Param {param} is required"
+msgstr "Param {param} is required"
+
+msgid "Process file_pair failed, file_pair_id: {file_pair_id}, error: {error}"
+msgstr "Process file_pair failed, file_pair_id: {file_pair_id}, error: {error}"
+
+msgid "Process file_pair config: {config}"
+msgstr "Process file_pair config: {config}"
+
+msgid "Start process file_pair id: {id}"
+msgstr "Start process file_pair id: {id}"
+
+msgid "End process file_pair id: {id}"
+msgstr "End process file_pair id: {id}"
+
+msgid "Start generator question by GA. ga_info: {ga_info}, prompt: {prompt}"
+msgstr "Start generator question by GA. ga_info: {ga_info}, prompt: {prompt}"
+
+msgid "Start LLM generator question. prompt: {prompt}"
+msgstr "Start LLM generator question. prompt: {prompt}"
+
+msgid "End LLM generator question by GA. result={result}"
+msgstr "End LLM generator question by GA. result={result}"
+
+msgid "End LLM generator question. result={result}"
+msgstr "End LLM generator question. result={result}"
+
+msgid "LLM generation result failed, result is empty"
+msgstr "LLM generation result failed, result is empty"
+
+msgid "Start LLM rebuild question by label. prompt: {prompt}"
+msgstr "Start LLM rebuild question by label. prompt: {prompt}"
+
+msgid "Process dataset generator config: {config}"
+msgstr "Process dataset generator config: {config}"
+
+msgid "Process question failed, question_id: {question_id}, error: {error}"
+msgstr "Process question failed, question_id: {question_id}, error: {error}"
+
+msgid "Start process question. question_id: {id}"
+msgstr "Start process question. question_id: {id}"
+
+msgid "Use MGA to enhance prompt words to generate answers"
+msgstr "Use MGA to enhance prompt words to generate answers"
+
+msgid "Generate answers using standard prompt words"
+msgstr "Generate answers using standard prompt words"
+
+msgid "Start LLM generator dataset, prompt: {prompt}"
+msgstr "Start LLM generator dataset, prompt: {prompt}"
+
+msgid "End LLM generator dataset. result={result}"
+msgstr "End LLM generator dataset. result={result}"
+
+msgid "End process question. question_id: {id}"
+msgstr "End process question. question_id: {id}"
+
+msgid "Machine not found. id: {id}"
+msgstr "Machine not found. id: {id}"
+
+msgid "I/O error occurred while writing file. error: {error}"
+msgstr "I/O error occurred while writing file. error: {error}"
+
+msgid "Unexpected error occurred. error: {error}"
+msgstr "Unexpected error occurred. error: {error}"
+
+msgid "Dataset version not found. id: {id}"
+msgstr "Dataset version not found. id: {id}"
+
+msgid "File not found. error: {error}"
+msgstr "File not found. error: {error}"
+
+msgid "No permission to read. error: {error}"
+msgstr "No permission to read. error: {error}"
+
+msgid "FinetuneConfig not found. id: {id}"
+msgstr "FinetuneConfig not found. id: {id}"
+
+msgid "Machine connection test failed. error: {error}"
+msgstr "Machine connection test failed. error: {error}"
+
+msgid "Llamafactory-cli on the machine was not found. exit_code: {exit_code}, error: {error}"
+msgstr "Llamafactory-cli on the machine was not found. exit_code: {exit_code}, error: {error}"
+
+msgid "Connection successful"
+msgstr "Connection successful"
+
+msgid "Only support Starting, Cancel, Success, Failed status finetune job query log"
+msgstr "Only support Starting, Cancel, Success, Failed status finetune job query log"
+
+msgid "Finetune job not found. id: {id}"
+msgstr "Finetune job not found. id: {id}"
+
+msgid "Only support start Init status finetune job"
+msgstr "Only support start Init status finetune job"
+
+msgid "Only support cancel Starting status finetune job"
+msgstr "Only support cancel Starting status finetune job"
+
+msgid "Machine connection has failed more than 10 times in a row, fine-tuning terminated"
+msgstr "Machine connection has failed more than 10 times in a row, fine-tuning terminated"
+
+msgid "In cases of single machine with multiple cards or multiple machines, the DeepSpeed configuration must be chosen"
+msgstr "In cases of single machine with multiple cards or multiple machines, the DeepSpeed configuration must be chosen"
+
+msgid "The file does not exist: {filepath}"
+msgstr "The file does not exist: {filepath}"
+
+msgid "The path is not a file: {filepath}"
+msgstr "The path is not a file: {filepath}"
+
+msgid "File read timeout"
+msgstr "File read timeout"
+
+msgid "SSH authentication failed: incorrect username/password/private key"
+msgstr "SSH authentication failed: incorrect username/password/private key"
+
+msgid "SSH connection exception. {error}"
+msgstr "SSH connection exception. {error}"
+
+msgid "An unknown error occurred during the connection process. {error}"
+msgstr "An unknown error occurred during the connection process. {error}"
+
+msgid "File read error. {error}"
+msgstr "File read error. {error}"
+
+msgid "Failed to download the file. {error}"
+msgstr "Failed to download the file. {error}"
+
+msgid "Finetune release not found. {id}"
+msgstr "Finetune release not found. {id}"
+
+msgid "Deploy cluster not found. id: {id}"
+msgstr "Deploy cluster not found. id: {id}"
+
+msgid "Can not delete Deploying or Starting status deploy cluster"
+msgstr "Can not delete Deploying or Starting status deploy cluster"
+
+msgid "Can not delete Deploying or Starting status lora adaptor"
+msgstr "Can not delete Deploying or Starting status lora adaptor"
+
+msgid "Can not install Deploying or Starting status deploy cluster"
+msgstr "Can not install Deploying or Starting status deploy cluster"
+
+msgid "Only support Starting status deploy cluster"
+msgstr "Only support Starting status deploy cluster"
+
+msgid "The connected machine was not found. ids: {ids}"
+msgstr "The connected machine was not found. ids: {ids}"
+
+msgid "Deploy LLM by vllm and ray failed. error: {error}"
+msgstr "Deploy LLM by vllm and ray failed. error: {error}"
+
+msgid "Start deploy job failed. exit_code: {exit_code}, error: {error}"
+msgstr "Start deploy job failed. exit_code: {exit_code}, error: {error}"
+
+msgid "Stop deploy cluster service failed. error: {error}"
+msgstr "Stop deploy cluster service failed. error: {error}"
+
+msgid "Remove deploy cluster service failed. error: {error}"
+msgstr "Remove deploy cluster service failed. error: {error}"
+
+msgid "Request {path} to remote machine failed. ip: {ip}, port: {port}, status_code: {status_code}, error_info: {error_info}"
+msgstr "Request {path} to remote machine failed. ip: {ip}, port: {port}, status_code: {status_code}, error_info: {error_info}"

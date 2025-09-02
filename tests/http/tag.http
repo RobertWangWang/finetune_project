@@ -1,0 +1,47 @@
+### 获取标签列表
+GET {{host}}/v1/tags/all?project_id=600bc29d-7b4c-4233-a58b-fbbb59f7f0f3
+
+### 添加一级标签
+POST {{host}}/v1/tags
+accept: application/json
+Content-Type: application/json
+
+{
+  "label": "一级标签",
+  "parent_id": "",
+  "project_id": "600bc29d-7b4c-4233-a58b-fbbb59f7f0f3"
+}
+
+> {%
+    // 提取响应中的项目ID并存储在全局变量中
+    client.global.set("parent_id", response.body.data.id);
+%}
+
+### 获取标签列表
+GET {{host}}/v1/tags/all?project_id=600bc29d-7b4c-4233-a58b-fbbb59f7f0f3
+
+### 添加子标签
+POST {{host}}/v1/tags
+accept: application/json
+Content-Type: application/json
+
+{
+  "label": "二级标签",
+  "parent_id": "{{parent_id}}",
+  "project_id": "600bc29d-7b4c-4233-a58b-fbbb59f7f0f3"
+}
+
+### 获取标签列表
+GET {{host}}/v1/tags/all?project_id=600bc29d-7b4c-4233-a58b-fbbb59f7f0f3
+
+### 更新子标签
+PUT {{host}}/v1/tags/{{parent_id}}
+accept: application/json
+Content-Type: application/json
+
+{
+  "label": "一键标签名称变更"
+}
+
+### 删除标签
+DELETE {{host}}/v1/tags/{{parent_id}}

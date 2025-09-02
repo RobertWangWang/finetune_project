@@ -1,0 +1,2 @@
+### 获取目录树
+GET {{host}}/v1/catalogs?project_id=600bc29d-7b4c-4233-a58b-fbbb59f7f0f3
