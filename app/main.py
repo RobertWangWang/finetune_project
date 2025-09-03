@@ -14,6 +14,7 @@ from app.api.llamafactory_api import finetune_config_api, finetune_job_api, \
     release_api
 from app.api.common_api import machine_api, llm_api
 from app.api.deploy_api import deploy_cluster_api
+from app.api.evaluation_api import model_evaluation_api
 from app.api.middleware.middleware import i18n_middleware
 from app.api.middleware.middleware import wrap_response_middleware
 from app.db.init import init_db
@@ -109,6 +110,7 @@ app.include_router(finetune_config_api.router, prefix="/v1")
 app.include_router(finetune_job_api.router, prefix="/v1")
 app.include_router(release_api.router, prefix="/v1")
 app.include_router(deploy_cluster_api.router, prefix="/v1")
+app.include_router(model_evaluation_api.router, prefix="/evaluation")
 
 if __name__ == "__main__":
     import uvicorn
