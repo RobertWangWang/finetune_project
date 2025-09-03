@@ -110,7 +110,7 @@ app.include_router(finetune_config_api.router, prefix="/v1")
 app.include_router(finetune_job_api.router, prefix="/v1")
 app.include_router(release_api.router, prefix="/v1")
 app.include_router(deploy_cluster_api.router, prefix="/v1")
-app.include_router(model_evaluation_api.router, prefix="/evaluation")
+app.include_router(model_evaluation_api.router, prefix="/v1")
 
 if __name__ == "__main__":
     import uvicorn
