@@ -39,6 +39,19 @@ def list_dataset_version(session: SessionDep, current_user: CurrentUserDep, id: 
     "/", response_model=DatasetVersionItem, summary="创建数据集版本", description="创建数据集版本"
 )
 def create_dataset_version(session: SessionDep, current_user: CurrentUserDep, dataset_version_create: DatasetVersionCreate) -> Any:
+
+    """
+    class DatasetVersionCreate(BaseModel):
+        name: str = Field(..., description="版本名称")
+        description: str = Field(..., description="版本描述")
+
+        project_id: str = Field(..., description="项目id")
+        dataset_id_list: list[str] = Field(..., description="数据集列表")
+        dataset_type: DatasetType = Field(..., description="数据集类型")
+
+        options: dict = Field({}, description="版本配置")
+    """
+
     if dataset_version_create.dataset_id_list is None or len(dataset_version_create.dataset_id_list) == 0:
         raise HTTPException(status_code=500, detail=i18n.gettext("Parameter verification failed. {param}").format(param="dataset_id_list"))
     dataset_version_item = dataset_version_service.create_dataset_version(session, current_user, dataset_version_create)

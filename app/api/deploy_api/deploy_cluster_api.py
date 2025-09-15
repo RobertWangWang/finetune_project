@@ -1,11 +1,15 @@
+import asyncio
+import json
+import logging
+
 from fastapi import APIRouter
-from typing import Generator, Any
+from typing import Generator, Any, AsyncGenerator
 
 from starlette.responses import StreamingResponse
 
 from app.api.middleware.deps import SessionDep, CurrentUserDep
 from app.models.deploy_models.deploy_cluster_model import DeployClusterCreate, DeployClusterItem, \
-    DeployClusterUpdate, DeployStatus, MachineList, LoraAdaptorDeployCreate
+    DeployClusterUpdate, DeployStatus, MachineList, LoraAdaptorDeployCreate, ChatRequest
 from app.services.deploy_services import deploy_cluster_service
 
 router = APIRouter(prefix="/deploy_clusters", tags=["deploy_clusters"])
@@ -97,6 +101,33 @@ async def cluster_logs(session: SessionDep, current_user: CurrentUserDep, id: st
 
     return StreamingResponse(
         generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+    )
+
+
+@router.post(
+    "/completion/stream", summary="流失问答", description="流失问答"
+)
+async def completion_stream(session: SessionDep, current_user: CurrentUserDep, chat_request: ChatRequest):
+    async def stream_generator():
+        try:
+            async for chunk in deploy_cluster_service.completion_stream(
+                session, current_user, chat_request
+            ):
+                yield chunk
+                # 检查客户端是否还连接
+        except asyncio.CancelledError:
+            # 客户端断开连接
+            logging.info("Client disconnected")
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        stream_generator(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

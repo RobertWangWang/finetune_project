@@ -28,6 +28,7 @@ from app.lib.finetune_path.path_build import build_work_path, build_config_path,
     build_deepspeed_path, build_output_path, build_train_dataset_info_json_path, build_train_dataset_info_path, \
     build_local_logs_path, build_lora_output_tar_path, build_local_lora_model_path
 from app.lib.i18n.config import i18n
+from app.lib.machine_connect import machine_connect
 from app.lib.machine_connect.machine_connect import RemoteMachine
 from app.models.dataset_models.dataset_version_model import DatasetType, DatasetVersionItem
 from app.models.llamafactory_models.finetune_config_model import FinetuneConfigItem
@@ -44,9 +45,12 @@ loop = asyncio.new_event_loop()
 
 
 def run_event_loop():
+    """
+        新建一个 asyncio 循环，用于异步监控任务。
+        通过线程在后台常驻运行。
+    """
     asyncio.set_event_loop(loop)
     loop.run_forever()
-
 
 threading.Thread(target=run_event_loop, daemon=True).start()
 
@@ -67,6 +71,10 @@ def llamafactory_yaml_build(dict_by_module: dict) -> str:
 def build_sft_example(job_id: str, finetune_config_orm_list: list[FinetuneConfigORM],
                       machine: MachineORM, dataset_version_orm: DatasetVersionORM,
                       local: str, node_finetune_machine_list: list[MachineORM]) -> FinetuneJobRunningExample:
+    """
+        根据机器数量、GPU 数量，决定是否加 torchrun 或 deepspeed。
+        把训练命令写入 systemd service，然后通过 SSH 下发到远程机器。
+    """
     # 构建多机器微调命令
     node_num = len(node_finetune_machine_list)
     node_index = 0
@@ -74,6 +82,7 @@ def build_sft_example(job_id: str, finetune_config_orm_list: list[FinetuneConfig
     for index, value in enumerate(node_finetune_machine_list):
         if value.id == machine.id:
             node_index = index
+
     if len(node_finetune_machine_list) == 1:
         if master.gpu_count > 1:
             train_cmd = f"/bin/bash -c 'FORCE_TORCHRUN=1 llamafactory-cli train {build_config_path(job_id)}'"
@@ -146,7 +155,13 @@ EOF
         cmds=cmds
     ))
 
-    machine_client = machine.to_remote_machine()
+    machine_client = machine_connect.Machine(
+        ip=machine.client_config.get("ip"),
+        ssh_port=machine.client_config.get("ssh_port"),
+        ssh_user=machine.client_config.get("ssh_user"),
+        ssh_password=machine.client_config.get("ssh_password"),
+        ssh_private_key=machine.client_config.get("ssh_private_key")
+    )
 
     return FinetuneJobRunningExample(
         machine_id=machine.id,
@@ -275,7 +290,7 @@ def finetune_job_logs(session: Session, current_user: User, id: str, machine_id:
     machine_orm: Optional[MachineORM] = None
     for machine in job_orm.node_finetune_machine_list:
         if machine.id == machine_id:
-            machine_orm = machine
+            machine_orm = MachineORM(**machine.to_dict())
             break
     if machine_orm is None:
         raise HTTPException(status_code=500,
@@ -375,6 +390,10 @@ def copy_deepspeed_config(machine: RemoteMachine, deepspeed_config: str, job_id:
 
 
 async def init_finetune_job(user: User, id: str, local: str):
+    """
+        在用户提交微调任务后，负责初始化任务所需的环境和文件，并更新数据库里的任务状态。
+        id: finetune_job_db orm id
+    """
     update_status = FinetuneJobStatus.Init
     error_info = ""
     try:
@@ -382,10 +401,22 @@ async def init_finetune_job(user: User, id: str, local: str):
             examples = finetune_job_running_example(session, user, FinetuneJobRunningExampleRequest(
                 id=id
             ), local)
-
+            """
+                class FinetuneJobRunningExampleRequest(BaseModel):
+                    id: Optional[str] = Field(None, description="id")
+                    stage: Optional[DatasetType] = Field(None, description="微调类型")
+                    dataset_version_id: Optional[str] = Field(None, description="数据集版本id")
+                    finetune_config_id_list: list[str] = Field(None, description="配置列表id")
+                    node_finetune_machine_id_list: list[str] = Field(None, description="微调 node 机器 id 列表")
+            """
             for example in examples:
                 machine_client = RemoteMachine(example.machine_client)
                 ok, error_info = machine_client.test_connection()
+                """
+                    创建远程机器客户端。
+                    测试是否能连通（SSH 连接）。
+                    如果失败 → 抛出异常。
+                """
                 if not ok:
                     raise HTTPException(status_code=500,
                                         detail=i18n.gettext("Machine connection test failed. error: {error}",
@@ -423,19 +454,31 @@ def get_finetune_method(configs):
 def create_finetune_job(session: Session, current_user: User,
                         create: FinetuneJobCreate) -> FinetuneJobItem:
 
-    if create.stage != DatasetType.SupervisedFineTuning:
+    """
+    class FinetuneJobCreate(BaseModel):
+        name: str = Field(..., description="任务名称")
+        description: str = Field(..., description="任务描述")
+
+        stage: DatasetType = Field(..., description="微调类型")
+        dataset_version_id: str = Field(..., description="数据集版本id")
+        finetune_config_id_list: list[str] = Field(..., description="配置列表id")
+
+        node_finetune_machine_id_list: list[str] = Field(None, description="微调 node 机器 id 列表")
+    """
+
+    if create.stage != DatasetType.SupervisedFineTuning: ### 监督式微调
         raise HTTPException(status_code=500,
                             detail=i18n.gettext("Parameter verification failed. {param}").format(param="stage"))
 
     dataset_version_orm = dataset_version_db.get(session, current_user, create.dataset_version_id)
-    if dataset_version_orm is None:
+    if dataset_version_orm is None: ### 数据集版本
         raise HTTPException(status_code=500, detail=i18n.gettext("Dataset version not found. id: {id}").format(
             id=create.dataset_version_id))
 
     finetune_config_orm_list = _query_finetune_config_and_check_exit(session, current_user,
-                                                                     create.finetune_config_id_list)
+                                                                     create.finetune_config_id_list) ### 查询微调配置是否都存在
 
-    machine_orm_list = _query_machine_and_check_exit(session, current_user, create.node_finetune_machine_id_list)
+    machine_orm_list = _query_machine_and_check_exit(session, current_user, create.node_finetune_machine_id_list) ### 查询机器是否都存在
     if len(machine_orm_list) == 0:
         raise HTTPException(status_code=500,
                             detail=i18n.gettext("Machine not found. id: {id}").format(
@@ -651,11 +694,12 @@ def start_finetune_job(session: Session, current_user: User,
     examples = finetune_job_running_example(session, current_user, FinetuneJobRunningExampleRequest(
         id=id
     ), local=get_current_locale())
-
+    print(examples)
     status = FinetuneJobStatus.Starting
     error_info = ""
     try:
         for example in examples:
+            print("---------",example)
             machine_client = RemoteMachine(example.machine_client)
             ok, error_info = machine_client.test_connection()
             if not ok:
@@ -663,6 +707,7 @@ def start_finetune_job(session: Session, current_user: User,
                                     detail=i18n.gettext("Machine connection test failed. error: {error}").format(
                                         error_info))
             for cmd in example.cmds:
+                print("---------",cmd)
                 out, error, code = machine_client.execute_command(cmd, timeout=180)
                 if code != 0:
                     raise HTTPException(status_code=500,

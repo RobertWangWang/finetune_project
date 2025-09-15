@@ -47,6 +47,20 @@ def create_machine(
         create_data: MachineSave = Body(...),
 
 ):
+    """
+    class MachineBase(BaseModel):
+        hostname: str = Field(..., description="机器名称")
+        device_type: Optional[str] = Field(..., description="设备类型")
+        cuda_available: bool = Field(True, description="是否是 cuda 设备")
+        gpu_count: int = Field(1, description="GPU的数量")
+
+        ip: str = Field(..., description="机器的 ip")
+        internal_ip: str = Field(..., description="机器的内网 ip")
+        ssh_port: int = Field(22, description="登陆的端口")
+        ssh_user: str = Field(..., description="ssh 登陆账号")
+        ssh_password: Optional[str] = Field(None, description="登陆的密码")
+        ssh_private_key: Optional[str] = Field(None, description="登陆使用的私钥")
+    """
     return machine_service.create_machine(session, current_user, create_data)
 
 

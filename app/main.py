@@ -14,7 +14,8 @@ from app.api.llamafactory_api import finetune_config_api, finetune_job_api, \
     release_api
 from app.api.common_api import machine_api, llm_api
 from app.api.deploy_api import deploy_cluster_api
-from app.api.evaluation_api import model_evaluation_api
+from app.api.evaluation_api import evaluation_api
+from app.api.evaluation_api import evaluation_dataset_api
 from app.api.middleware.middleware import i18n_middleware
 from app.api.middleware.middleware import wrap_response_middleware
 from app.db.init import init_db
@@ -74,6 +75,33 @@ def http_exception_handler(request: Request, exc: Exception):
     )
 
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        headers=headers_for_allow_origin,
+        content={
+            "code": exc.status_code,
+            "message": exc.detail,
+            "data": None,
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def universal_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        headers=headers_for_allow_origin,
+        content={
+            "code": 500,
+            "message": str(exc),
+            "data": None,
+        },
+    )
+
+
+
 app.middleware("http")(i18n_middleware)
 app.middleware("http")(wrap_response_middleware)
 
@@ -110,7 +138,8 @@ app.include_router(finetune_config_api.router, prefix="/v1")
 app.include_router(finetune_job_api.router, prefix="/v1")
 app.include_router(release_api.router, prefix="/v1")
 app.include_router(deploy_cluster_api.router, prefix="/v1")
-app.include_router(model_evaluation_api.router, prefix="/v1")
+app.include_router(evaluation_api.router, prefix="/v1")
+app.include_router(evaluation_dataset_api.router, prefix="/v1")
 
 if __name__ == "__main__":
     import uvicorn

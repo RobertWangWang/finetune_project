@@ -5,7 +5,6 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.config.config import settings
 
-
 engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,  # 启用连接健康检查
@@ -16,7 +15,5 @@ engine = create_engine(
 )
 
 Base = declarative_base()
-
-
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

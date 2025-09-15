@@ -76,3 +76,10 @@ class LoraAdaptorDeployCreate(BaseModel):
     release_id: Optional[str] = Field(..., description="制品的id")
     finetune_model_path: str = Field(..., description="部署的地址")
     stage: DatasetType = Field(..., description="部署的状态")
+
+class ChatRequest(BaseModel):
+    prompt: str
+    deploy_cluster_id: str
+    deploy_cluster_lora_id: Optional[str] = ""
+    temperature: Optional[float] = 0.7
+    max_tokens: Optional[int] = 1000

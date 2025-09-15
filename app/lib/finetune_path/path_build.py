@@ -64,3 +64,19 @@ def build_deploy_lora_tar_path(deploy_id: str, lora_id: str):
 
 def build_deploy_lora_path(deploy_id: str, lora_id: str):
     return path.join(machine_run_dir, 'deploys', deploy_id, "loras", lora_id)
+
+# --------- 评估的地址
+def build_evaluation_work_path(evaluation_id: str):
+    return path.join(machine_run_dir, 'evaluations', evaluation_id)
+
+def build_evaluation_logs_path(evaluation_id: str):
+    return path.join(machine_run_dir, 'evaluations', evaluation_id, "run.log")
+
+def build_evaluation_lora_tar_path(evaluation_id: str, lora_id: str):
+    return path.join(machine_run_dir, 'evaluations', evaluation_id, "loras", lora_id, "lora_model.tar.gz")
+
+def build_evaluation_lora_path(evaluation_id: str, lora_id: str):
+    return path.join(machine_run_dir, 'evaluations', evaluation_id, "loras", lora_id)
+
+def build_evaluation_llm_model_path(evaluation_id: str, llm_name: str):
+    return path.join(machine_run_dir, 'evaluations', evaluation_id, "llm_model", llm_name)

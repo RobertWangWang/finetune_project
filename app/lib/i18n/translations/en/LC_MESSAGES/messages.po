@@ -303,3 +303,6 @@ msgstr "Remove deploy cluster service failed. error: {error}"
 
 msgid "Request {path} to remote machine failed. ip: {ip}, port: {port}, status_code: {status_code}, error_info: {error_info}"
 msgstr "Request {path} to remote machine failed. ip: {ip}, port: {port}, status_code: {status_code}, error_info: {error_info}"
+
+msgid "Lora adapter not found in deployment cluster. lora_id: {lora_id}"
+msgstr "Lora adapter not found in deployment cluster. lora_id: {lora_id}"

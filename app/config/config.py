@@ -1,9 +1,12 @@
 # settings.py
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
-
+# 找到和 settings.py 同目录的 .env
+env_path = Path(__file__).resolve().parent / ".env"
+print(f"Loading .env from {env_path}")
+load_dotenv(dotenv_path=env_path)
 
 class Settings:
     _instance = None
@@ -21,7 +24,9 @@ class Settings:
         self.DATASET_VERSION_DIR = os.getenv('DATASET_VERSION_DIR')
         self.FINETUNE_FILE_LOCAL_DIR = os.getenv('FINETUNE_FILE_LOCAL_DIR')
         self.DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-
+        self.DEFAULT_EVALUATION_FOLDER = os.getenv('DEFAULT_EVALUATION_DATASET_FOLDER_DIR_PATH')
+        self.USER_EVALUATION_FOLDER = os.getenv('DEFAULT_EVALUATION_DATASET_USER_UPLOAD_DIR_PATH')
+        os.environ['DISABLE_VERSION_CHECK'] = "1" ### llamafactory 与 4.0.0版本的dataset冲突，临时关闭
 
 # 创建全局实例
 settings = Settings()

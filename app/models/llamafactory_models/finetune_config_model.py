@@ -30,6 +30,6 @@ class FinetuneConfigSave(BaseModel):
     name: str = Field(..., description="配置名称")
     description: str = Field(..., description="配重描述")
 
-    module: Module = Field(..., description="模块")
-    config_type: ConfigType = Field(..., description="配置类型")
+    module: Module = Field(..., description="模块") ### 微调的基座模型
+    config_type: ConfigType = Field(..., description="配置类型") ### 配置所属的类别
     config: dict = Field(..., description="配置内容")

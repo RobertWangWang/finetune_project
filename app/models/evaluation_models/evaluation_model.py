@@ -1,49 +1,84 @@
-# app/models/evaluation_models/evaluation_model.py
-from typing import Optional, List
-from pydantic import BaseModel, Field
+from __future__ import annotations
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field, ConfigDict
 
 
-class EvaluationItem(BaseModel):
-    id: str
-    project_id: str = Field(..., description="项目ID")
-    tag_name: Optional[str] = Field(None, description="标签筛选（DatasetORM.tag_name）")
-    model: Optional[str] = Field(None, description="模型筛选（DatasetORM.model）")
-    bleu: Optional[float] = Field(None, description="BLEU")
-    rouge: Optional[float] = Field(None, description="ROUGE（rougeLsum）")
-    accuracy: Optional[float] = Field(None, description="准确率")
-    latency: Optional[float] = Field(None, description="平均延迟（秒）")
-    throughput: Optional[float] = Field(None, description="吞吐（requests/sec）")
-    created_at: int
-    updated_at: int
+# -------- Base --------
+class EvaluationBase(BaseModel):
+    """与 evaluations 表字段对齐的公共基类（不含审计/主键/归属）"""
+    evaluation_dataset_id: str = Field(..., description="评测使用的数据集版本 ID")
+    eval_model_id: str = Field(..., description="使用的模型 ID")
+    eval_type: str = Field(..., description="评测类型")
+    deploy_cluster_id: str = Field(..., description="部署集群 ID")
+
+    # 评测结果（JSON，可为空）
+    eval_result: Optional[Dict[str, Any]] = Field(
+        None, description="评测结果 JSON（包含各类指标，如 bleu/rouge/accuracy/latency 等）"
+    )
+
+    # 状态 & 错误信息
+    status: Optional[str] = Field("", description="评测任务状态")
+    error_info: Optional[str] = Field(None, description="错误信息")
 
 
-class EvaluationList(BaseModel):
-    data: List[EvaluationItem]
-    count: int
-
-
-class EvaluationCreate(BaseModel):
-    project_id: str = Field(..., description="项目ID")
-    tag_name: Optional[str] = Field(None, description="标签筛选（可选）")
-    model: Optional[str] = Field(None, description="模型筛选（可选）")
+# -------- Create / Update --------
+class EvaluationCreate(EvaluationBase):
+    """创建时的请求体。
+    user_id / group_id / created_at / updated_at 由后端注入。
+    """
+    pass
 
 
 class EvaluationUpdate(BaseModel):
-    # 可更新过滤条件或回填指标（通常 run 后由服务层写回）
-    tag_name: Optional[str] = None
-    model: Optional[str] = None
-    bleu: Optional[float] = None
-    rouge: Optional[float] = None
-    accuracy: Optional[float] = None
-    latency: Optional[float] = None
-    throughput: Optional[float] = None
+    """部分字段更新（全部可选）"""
+    evaluation_dataset_id: Optional[str] = None
+    eval_model_id: Optional[str] = None
+    eval_type: Optional[str] = None
+    deploy_cluster_id: Optional[str] = None
+    eval_result: Optional[Dict[str, Any]] = None
+    status: Optional[str] = None
+    error_info: Optional[str] = None
 
 
-class EvaluationRun(BaseModel):
-    vllm_base_url: str = Field(..., description="vLLM REST Base URL，如 http://127.0.0.1:8000")
-    lora_name: str = Field(..., description="LoRA 名称（加载到 vLLM）")
-    lora_path: str = Field(..., description="LoRA 权重在 vLLM 机器上的路径")
-    max_examples: int = Field(100, ge=1, le=100000, description="抽样评测数据条数")
-    concurrency: int = Field(4, ge=1, le=64, description="并发请求数")
-    max_tokens: int = Field(512, ge=1, le=8192, description="生成最大 token 数")
-    temperature: float = Field(0.1, ge=0.0, le=2.0, description="采样温度")
+# -------- Read (Out) --------
+class EvaluationOut(EvaluationBase):
+    """对外返回的完整对象"""
+    model_config = ConfigDict(from_attributes=True)  # Pydantic v2: 支持 ORM 对象解析
+
+    id: str = Field(..., description="评测记录唯一 ID")
+    user_id: str
+    group_id: str
+    created_at: int
+    updated_at: int
+    is_deleted: int
+
+
+# -------- List & Paging --------
+class EvaluationListQuery(BaseModel):
+    """列表查询的 query 参数"""
+    page_no: int = Field(1, ge=1)
+    page_size: int = Field(100, ge=1, le=1000)
+
+    # 与后端 list() 的过滤条件对齐
+    evaluation_dataset_id: Optional[str] = None
+    eval_type: Optional[str] = None
+    eval_model_id: Optional[str] = None
+
+
+class EvaluationListOut(BaseModel):
+    """列表返回：数据 + 总数"""
+    items: List[EvaluationOut]
+    total: int
+
+class DatasetEvaluationRequest(BaseModel):
+    """
+    配置模型：在指定机器上进行数据集评测
+    """
+    id: str = Field(..., description="评测任务 ID")
+    machine_id: str = Field(..., description="运行评测的机器 ID")
+    dataset_path: str = Field(..., description="本机绝对路径，例如 /home/user/datasets/data.json")
+    eval_type: str = Field(..., description="评测类型，例如 qa-evaluation / text-generation / classification")
+    metrics: List[str] = Field(default=["bleu", "rouge", "accuracy"], description="要计算的指标列表")
+    partition_keyword:str = Field(default="test", description="用那一部分数据集来评测的过滤关键词，train，test")
+    evaluation_extraction_keyword:str = Field(default="", description="数据集的提取关键词，例如：messages,conversation")
+    role:str = Field(default="system", description="当前进行评测的角色， system为默认数据集，user为用户上传的数据集")

@@ -305,3 +305,6 @@ msgstr "删除部署的集群服务失败. error: {error}"
 
 msgid "Request {path} to remote machine failed. ip: {ip}, port: {port}, status_code: {status_code}, error_info: {error_info}"
 msgstr "请求远程机器的 {path} 接口失败. ip: {ip}, 端口: {port}, 退出码: {status_code}, 错误信息: {error_info}"
+
+msgid "Lora adapter not found in deployment cluster. lora_id: {lora_id}"
+msgstr "lora 适配器未在部署集群中找到. lora_id: {lora_id}"

@@ -1,241 +1,259 @@
-# app/services/evaluation_services/evaluation_service.py
-import concurrent.futures
-import json
-import math
-import shlex
-import subprocess
-import time
-from typing import Any, Dict, List, Optional, Tuple
-
+# app/services/evaluation_service.py
+from __future__ import annotations
+from typing import Tuple, List, Optional, Iterable, Dict, Any
+import hashlib
+import asyncio
+import os, paramiko
 import requests
-import evaluate  # pip install evaluate
-from fastapi import HTTPException
+from tqdm import tqdm
+import evaluate
+from datasets import load_dataset
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from loguru import logger
 
-from app.db.model_evaluation_db_model import evaluation_db
-from app.db.model_evaluation_db_model.evaluation_db import EvaluationORM
-from app.db.dataset_db_model.dataset_db import DatasetORM  # 参考 dataset_db.py
-from app.lib.i18n.config import i18n
-from app.models.evaluation_models.evaluation_model import (
-    EvaluationItem, EvaluationList, EvaluationCreate, EvaluationUpdate, EvaluationRun
-)
+from app.db.common_db_model.machine_db import get_machine_by_id
+from app.lib.finetune_path.path_build import (
+    build_evaluation_logs_path,
+    build_evaluation_work_path,
+    build_evaluation_lora_path,
+    build_evaluation_llm_model_path,
+    build_evaluation_lora_tar_path)
 from app.models.user_model import User
+from app.db.evaluation_db_model.evaluation_db import EvaluationORM, list_evaluations as orm_list, get_evaluation as orm_get
+from app.db.evaluation_db_model.evaluation_db import EvaluationStatus
+from app.models.evaluation_models.evaluation_model import (
+    EvaluationCreate, EvaluationUpdate,
+    EvaluationOut, EvaluationListQuery, EvaluationListOut,DatasetEvaluationRequest
+)
+from app.config.config import settings
 
-
-# ---------- utils ----------
-def _http_ok(resp: requests.Response):
-    if not (200 <= resp.status_code < 300):
-        raise RuntimeError(f"HTTP {resp.status_code}: {resp.text}")
-
-
-def _curl_load_lora(vllm_base_url: str, lora_name: str, lora_path: str):
+def _allowed_fields_from_orm(orm_cls) -> set[str]:
     """
-    用命令行 curl 调 vLLM 的 /v1/load_lora_adapter 接口实现动态加载 LoRA。
-    如你的 vLLM 分支字段不同，请在此调整 adapter_name/lora_path 键名。
+    根据 ORM 的 mapper 自动获取可写字段集合，避免硬编码字段名。
     """
-    url = vllm_base_url.rstrip("/") + "/v1/load_lora_adapter"
-    payload = json.dumps({"adapter_name": lora_name, "lora_path": lora_path}, ensure_ascii=False)
-    cmd = f"curl -sS -X POST {shlex.quote(url)} -H 'Content-Type: application/json' -d {shlex.quote(payload)}"
-    proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
-    if proc.returncode != 0:
-        raise RuntimeError(f"curl failed: {proc.stderr.strip() or proc.stdout.strip()}")
+    return {attr.key for attr in orm_cls.__mapper__.attrs}
 
 
-def _chat_completion(vllm_base_url: str, prompt: str, lora_name: str,
-                     max_tokens: int, temperature: float) -> Tuple[str, float]:
+def _assign_by_allowlist(obj: EvaluationORM, data: Dict[str, Any], allow: Iterable[str]) -> None:
     """
-    调 vLLM 的 /v1/chat/completions；通过 header + extra_body 传 lora_name。
-    返回：(生成文本, 单次请求延迟秒)
+    仅给 ORM 对象赋值在 allow 集合中的字段，避免 Unknown 字段报错。
     """
-    url = vllm_base_url.rstrip("/") + "/v1/chat/completions"
-    headers = {"X-LoRA-Adapter": lora_name}
-    body = {
-        "model": "served-base",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "extra_body": {"lora_name": lora_name},
-    }
-    t0 = time.time()
-    resp = requests.post(url, headers=headers, json=body, timeout=120)
-    latency = time.time() - t0
-    _http_ok(resp)
-    data = resp.json()
-    try:
-        text = data["choices"][0]["message"]["content"]
-    except Exception:
-        text = json.dumps(data, ensure_ascii=False)
-    return text, latency
+    for k, v in data.items():
+        if k in allow:
+            setattr(obj, k, v)
 
 
-def _compute_metrics(preds: List[str], refs: List[str]) -> Dict[str, Any]:
+# ------------------- CRUD for routes to call ------------------- #
+def list_evaluations(
+    session: Session,
+    current_user: User,
+    query: EvaluationListQuery
+) -> EvaluationListOut:
     """
-    计算 Accuracy / BLEU / ROUGE
-    - Accuracy: 严格字符串匹配（可按需拓展）
-    - ROUGE: 取 rougeLsum 作为单值
+    分页查询 + 条件过滤。过滤字段与 ORM 层 list() 保持一致。
     """
-    correct = sum(1 for p, r in zip(preds, refs) if p.strip() == r.strip())
-    accuracy = correct / max(1, len(refs))
+    from app.db.evaluation_db_model.evaluation_db import list_evaluations as orm_list
 
-    bleu = evaluate.load("bleu")
+    # 直接复用 ORM 层的 list()，确保排序/分页一致
+    rows, total = orm_list(
+        session=session,
+        current_user=current_user,
+        page_no=query.page_no,
+        page_size=query.page_size,
+        evaluation_dataset_id=query.evaluation_dataset_id,
+        eval_type=query.eval_type,
+        eval_model_id=query.eval_model_id,
+    )
+
+    items = [EvaluationOut.model_validate(r) for r in rows]
+    return EvaluationListOut(items=items, total=total)
+
+
+def get_evaluation(
+    session: Session,
+    current_user: User,
+    evaluation_id: str
+) -> Optional[EvaluationOut]:
+    """
+    根据 ID 获取单条记录。找不到返回 None。
+    """
+    from app.db.evaluation_db_model.evaluation_db import get_evaluation as orm_get
+
+    row = orm_get(session=session, current_user=current_user, evaluation_id=evaluation_id)
+    return EvaluationOut.model_validate(row) if row else None
+
+
+def create_evaluation(
+    session: Session,
+    current_user: User,
+    data: EvaluationCreate
+) -> EvaluationOut:
+    """
+    创建记录：自动注入 user_id/group_id/时间戳 等在 ORM create() 里完成。
+    """
+    from app.db.evaluation_db_model.evaluation_db import create_evaluation as orm_create
+    allow = _allowed_fields_from_orm(EvaluationORM)
+    obj = EvaluationORM()
+    _assign_by_allowlist(obj, data.model_dump(exclude_none=True), allow)
+
+    created = orm_create(session=session, current_user=current_user, evaluation=obj)
+    return EvaluationOut.model_validate(created)
+
+
+def update_evaluation(
+    session: Session,
+    current_user: User,
+    evaluation_id: str,
+    patch: EvaluationUpdate
+) -> Optional[EvaluationOut]:
+    """
+    局部更新：仅更新传入的字段，且只更新 ORM 允许的字段。
+    """
+    from app.db.evaluation_db_model.evaluation_db import update as orm_update
+
+    allow = _allowed_fields_from_orm(EvaluationORM)
+    payload = {k: v for k, v in patch.model_dump(exclude_none=True).items() if k in allow}
+
+    updated = orm_update(
+        session=session,
+        current_user=current_user,
+        evaluation_id=evaluation_id,
+        update_data=payload
+    )
+    return EvaluationOut.model_validate(updated) if updated else None
+
+
+def delete_evaluation(
+    session: Session,
+    current_user: User,
+    evaluation_id: str
+) -> Optional[EvaluationOut]:
+    """
+    软删除：底层把 is_deleted 置为1，保留审计。
+    """
+    from app.db.evaluation_db_model.evaluation_db import delete as orm_delete
+
+    deleted = orm_delete(session=session, current_user=current_user, evaluation_id=evaluation_id)
+    return EvaluationOut.model_validate(deleted) if deleted else None
+
+async def evaluate_model_on_dataset(
+    db: Session,
+    current_user: User,
+    request: DatasetEvaluationRequest
+) -> dict:
+    """
+    在指定机器上运行大模型数据集评测
+    - 加载数据集
+    - 调用 vLLM API 推理
+    - 计算 BLEU / ROUGE / Accuracy
+    - 更新数据库
+    """
+
+    # 1. 找到 Evaluation 任务
+    evaluation: EvaluationORM = db.query(EvaluationORM).filter_by(
+        record_id=request.id,
+        user_id=current_user.id
+    ).first()
+    if not evaluation:
+        raise ValueError(f"未找到 record_id={request.record_id} 的任务")
+
+    path_prefix = ""
+    if request.role == "system":
+        path_prefix = settings.DEFAULT_EVALUATION_FOLDER
+    elif request.role == "user":
+        path_prefix = settings.USER_EVALUATION_FOLDER
+
+    evaluation_id = evaluation.record_id
+
+    # === 动态创建日志文件（evaluation_id 命名） ===
+    log_file = f"evaluation_{evaluation_id}.log"
+    logger.add(
+        log_file,
+        rotation=None,       # 不分割
+        enqueue=True,        # 实时写入
+        backtrace=True,
+        diagnose=True,
+        encoding="utf-8"
+    )
+    logger.info(f"日志文件已创建: {log_file}")
+
+    print(path_prefix+request.dataset_path)
+
+    # 2. 加载数据集
+    if request.dataset_path.endswith(".json") or request.dataset_path.endswith(".jsonl"):
+        dataset = load_dataset("json", data_files=path_prefix+request.dataset_path, split=request.partition_keyword)
+    else:
+        dataset = load_dataset(path_prefix+request.dataset_path, split=request.partition_keyword)
+
+    logger.info(f"数据集 {request.dataset_path} 加载完成，总样本数={len(dataset)}")
+
+    # 取一个小样本（避免 OOM）
+    subset = dataset.select(range(min(25, len(dataset))))
+    logger.info(f"实际评测样本数={len(subset)}")
+
+    predictions, references = [], []
+
+    # 3. 推理接口配置
+    machine = get_machine_by_id(db, current_user, request.machine_id)
+    if not machine or not machine.client_config:
+        logger.error(f"未找到指定机器或缺少 client_config: {request.machine_id}")
+        raise ValueError(f"未找到指定机器或缺少 client_config: {request.machine_id}")
+
+    ip = machine.client_config.get("ip")
+    vllm_url = f"http://{ip}:8001/v1/chat/completions"
+    model_name = evaluation.eval_model_id
+
+    logger.info(f"使用机器 {ip}，推理接口={vllm_url}")
+
+    # 4. 遍历数据集，调用 vLLM API
+    for example in tqdm(subset, desc="Evaluating"):
+        print(example)
+        messages = example[request.evaluation_extraction_keyword]
+        ref_answer = messages[-1]["content"].strip()
+
+        payload = {
+            "model": model_name,
+            "messages": messages[:-1],
+            "temperature": 0.1,
+            "max_tokens": 512
+        }
+
+        try:
+            resp = requests.post(vllm_url, json=payload, timeout=60)
+            resp.raise_for_status()
+            output = resp.json()
+
+            generated = output["choices"][0]["message"]["content"].strip()
+
+            predictions.append(generated)
+            references.append(ref_answer)
+
+            logger.debug(f"预测完成: ref={ref_answer[:30]} pred={generated[:30]}")
+
+        except Exception as e:
+            logger.exception(f"调用 vLLM API 出错: {e}")
+            predictions.append("")
+            references.append(ref_answer)
+
+    # 5. 评测：ROUGE / BLEU / Accuracy
     rouge = evaluate.load("rouge")
+    bleu = evaluate.load("bleu")
 
-    bleu_score = bleu.compute(predictions=preds, references=[[r] for r in refs])
-    rouge_score = rouge.compute(predictions=preds, references=refs)
-    rouge_scalar = float(rouge_score.get("rougeLsum", 0.0))
+    logger.info("开始计算 ROUGE 和 BLEU")
 
-    return {
-        "accuracy": float(accuracy),
-        "bleu": float(bleu_score.get("bleu", 0.0)),
-        "rouge_scalar": rouge_scalar,
-        "rouge_detail": {
-            "rouge1": float(rouge_score.get("rouge1", 0.0)),
-            "rouge2": float(rouge_score.get("rouge2", 0.0)),
-            "rougeL": float(rouge_score.get("rougeL", 0.0)),
-            "rougeLsum": rouge_scalar,
-        },
-    }
+    rouge_result = rouge.compute(predictions=predictions, references=references, num_process=16)
+    bleu_result = bleu.compute(predictions=predictions, references=references, num_process=16)
+    accuracy = sum(p == r for p, r in zip(predictions, references)) / len(predictions)
 
+    results = {"rouge": rouge_result, "bleu": bleu_result, "accuracy": accuracy}
+    logger.success(f"评测完成，结果: {results}")
 
-# ---------- converters ----------
-def _to_item(orm: EvaluationORM) -> EvaluationItem:
-    return EvaluationItem(
-        id=orm.id,
-        project_id=orm.project_id,
-        tag_name=orm.tag_name,
-        model=orm.model,
-        bleu=orm.bleu,
-        rouge=orm.rouge,
-        accuracy=orm.accuracy,
-        latency=orm.latency,
-        throughput=orm.throughput,
-        created_at=orm.created_at,
-        updated_at=orm.updated_at,
-    )
+    # 6. 更新数据库
+    evaluation.eval_result = results
+    evaluation.status = "evaluated"
+    db.commit()
+    logger.info(f"数据库已更新，record_id={evaluation_id}")
+
+    return results
 
 
-# ---------- CRUD services ----------
-def create_evaluation(session: Session, current_user: User, create: EvaluationCreate) -> EvaluationItem:
-    obj = EvaluationORM(
-        project_id=create.project_id,
-        tag_name=create.tag_name,
-        model=create.model,
-        bleu=None, rouge=None, accuracy=None, latency=None, throughput=None,
-    )
-    saved = evaluation_db.create(session, current_user, obj)
-    return _to_item(saved)
-
-
-def get_evaluation(session: Session, current_user: User, id: str) -> EvaluationItem:
-    obj = evaluation_db.get(session, current_user, id)
-    if not obj:
-        raise HTTPException(status_code=404, detail=i18n.gettext("Evaluation task not found. id: {id}").format(id=id))
-    return _to_item(obj)
-
-
-def list_evaluations(session: Session, current_user: User, page: int, page_size: int,
-                     project_id: str, tag_name: Optional[str] = None, model: Optional[str] = None) -> EvaluationList:
-    rows, total = evaluation_db.list(session, current_user, page, page_size, project_id, tag_name, model)
-    return EvaluationList(data=[_to_item(r) for r in rows], count=total)
-
-
-def update_evaluation(session: Session, current_user: User, id: str, update: EvaluationUpdate) -> EvaluationItem:
-    data = update.model_dump(exclude_unset=True)
-    obj = evaluation_db.update(session, current_user, id, data)
-    if not obj:
-        raise HTTPException(status_code=404, detail=i18n.gettext("Evaluation task not found. id: {id}").format(id=id))
-    return _to_item(obj)
-
-
-def delete_evaluation(session: Session, current_user: User, id: str) -> EvaluationItem:
-    existed = evaluation_db.get(session, current_user, id)
-    if not existed:
-        raise HTTPException(status_code=404, detail=i18n.gettext("Evaluation task not found. id: {id}").format(id=id))
-    deleted = evaluation_db.delete(session, current_user, id)
-    return _to_item(deleted or existed)
-
-
-# ---------- run evaluation (核心执行) ----------
-def run_evaluation(session: Session, current_user: User, id: str, run: EvaluationRun) -> EvaluationItem:
-    """
-    运行评测：
-      1) 命令行 curl 动态加载 LoRA
-      2) 从 DatasetORM 读取 confirmed=True，叠加 EvaluationORM 的过滤（project_id/tag_name/model）
-      3) 并发请求 vLLM /v1/chat/completions
-      4) 计算 BLEU/ROUGE/准确率/平均延迟/吞吐
-      5) 写回 EvaluationORM
-    """
-    orm = evaluation_db.get(session, current_user, id)
-    if not orm:
-        raise HTTPException(status_code=404, detail=i18n.gettext("Evaluation task not found. id: {id}").format(id=id))
-
-    # 1) 动态加载 LoRA（命令行）
-    _curl_load_lora(run.vllm_base_url, run.lora_name, run.lora_path)
-
-    # 2) 拉数：仅 confirmed=True
-    q = session.query(DatasetORM).filter(
-        DatasetORM.user_id == current_user.id,
-        DatasetORM.group_id == current_user.group_id,
-        DatasetORM.is_deleted == 0,
-        DatasetORM.confirmed == True,
-    )
-    if orm.project_id:
-        q = q.filter(DatasetORM.project_id == orm.project_id)
-    if orm.tag_name:
-        q = q.filter(DatasetORM.tag_name == orm.tag_name)
-    if orm.model:
-        q = q.filter(DatasetORM.model == orm.model)
-
-    rows = q.order_by(desc(DatasetORM.created_at)).limit(run.max_examples).all()
-    if not rows:
-        raise HTTPException(status_code=400, detail=i18n.gettext("No dataset rows found for evaluation."))
-
-    prompts: List[str] = []
-    refs: List[str] = []
-    for r in rows:
-        ques = (r.question or "").strip()
-        cot = (r.cot or "").strip() if hasattr(r, "cot") else ""
-        prompt = f"{ques}\n" if not cot else f"{ques}\n（可用思维链）{cot}\n"
-        prompts.append(prompt)
-        refs.append((r.answer or "").strip())
-
-    # 3) 并发推理
-    preds: List[str] = []
-    latencies: List[float] = []
-
-    def _worker(p: str) -> Tuple[str, float]:
-        return _chat_completion(run.vllm_base_url, p, run.lora_name, run.max_tokens, run.temperature)
-
-    t0 = time.time()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=run.concurrency) as ex:
-        futs = [ex.submit(_worker, p) for p in prompts]
-        for fut in concurrent.futures.as_completed(futs):
-            try:
-                text, lat = fut.result()
-                preds.append(text)
-                latencies.append(lat)
-            except Exception:
-                preds.append("")
-                latencies.append(float("inf"))
-    t1 = time.time()
-
-    n = len(prompts)
-    wall = max(1e-6, t1 - t0)
-    finite = [x for x in latencies if math.isfinite(x)]
-    avg_latency = (sum(finite) / max(1, len(finite))) if finite else float("inf")
-    throughput_rps = n / wall
-
-    # 4) 指标
-    scores = _compute_metrics(preds, refs)
-
-    # 5) 写回 ORM
-    update_payload = dict(
-        bleu=scores["bleu"],
-        rouge=scores["rouge_scalar"],
-        accuracy=scores["accuracy"],
-        latency=float(avg_latency),
-        throughput=float(throughput_rps),
-    )
-    saved = evaluation_db.update(session, current_user, id, update_payload)
-    return _to_item(saved)
